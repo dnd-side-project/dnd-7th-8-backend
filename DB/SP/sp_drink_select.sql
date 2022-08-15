@@ -33,11 +33,11 @@ LAST UPDATE : 2022-08-07
          , D.`manufacture`
          , D.`price`
          , D.`large_category`
-         , D.`medidum_category`
+         , D.`medium_category`
          , D.`small_category`
          , D.`img`
          , D.`alcohol`
-         , D.`mesure`
+         , D.`measure`
          , D.`caffeine`
          , (SELECT GROUP_CONCAT(allergy) FROM drink_allergy WHERE drink_id=i_drink_id) as `allergy`
          , (SELECT GROUP_CONCAT(tag) FROM drink_tag WHERE drink_id=i_drink_id) as `tag`

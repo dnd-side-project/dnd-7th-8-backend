@@ -27,7 +27,7 @@ LAST UPDATE : 2022-08-07
     SELECT MU.`nickname`
          , DC.`comment`
          , DC.`score`
-         , (SELECT COUNT(*) FROM drink_comment_like WHERE R.drink_id = i_drink_id) as `like_cnt`
+         , (SELECT COUNT(*) FROM drink_comment_like WHERE drink_id = i_drink_id) as `like_cnt`
     FROM drink_comment AS DC
     LEFT JOIN (
         SELECT customer_uuid
