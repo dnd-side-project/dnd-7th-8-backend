@@ -4,9 +4,10 @@ from drinking_pleasure.my_settings import ES
 class MakeESQuery:
     def __init__(self,
                  search_query=None,  # str
-                 recipe_name=None,  # str
+                 drink_name=None,  # str
                  price=None,  # [0, 5000]
                  tag=None,  # list
+                 allergy=None,  # list
                  large_category=None,  # str
                  medium_category=None,  # str
                  small_category=None,  # str
@@ -28,9 +29,10 @@ class MakeESQuery:
             "size": limit
         }
         self.search_query = search_query
-        self.recipe_name = recipe_name
+        self.drink_name = drink_name
         self.price = price
         self.tag = tag
+        self.allergy = allergy
         self.large_category = large_category
         self.medium_category = medium_category
         self.small_category = small_category
@@ -63,43 +65,12 @@ class MakeESQuery:
             "query_string": {
                 "query": self.search_query,
                 "fields": [
-                    "recipe_name^2.0",
-                    "main_meterial.drink_name^1.0",
-                    "sub_meterial.meterial_name^1.0",
+                    "drink_name^2.0",
+                    "large_category^1.0",
+                    "medium_category^1.0",
+                    "small_category^1.0",
                 ]
             }
-        })
-        query["query"]["bool"]["should"].append({
-          "nested": {
-            "path": "main_meterial",
-            "query": {
-              "bool": {
-                "filter": [
-                  {
-                    "term": {
-                      "main_meterial.drink_name": self.search_query
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        })
-        query["query"]["bool"]["should"].append({
-          "nested": {
-            "path": "sub_meterial",
-            "query": {
-              "bool": {
-                "filter": [
-                  {
-                    "match": {
-                      "sub_meterial.meterial_name": self.search_query
-                    }
-                  }
-                ]
-              }
-            }
-          }
         })
         query["query"]["bool"]["should"].append({
           "nested": {
@@ -119,10 +90,10 @@ class MakeESQuery:
         })
         return query
 
-    def add_recipe_name(self, query):
+    def add_drink_name(self, query):
         query["query"]["bool"]["must"].append({
             "match": {
-                "recipe_name": self.recipe_name
+                "drink_name": self.drink_name
             }
         })
         return query
@@ -155,6 +126,27 @@ class MakeESQuery:
           })
 
         query["query"]["bool"]["filter"].append(tag_query)
+        return query
+
+    def add_allergy(self, query):
+        allergy_query = {
+          "nested": {
+            "path": "allergies",
+            "query": {
+              "bool": {
+                "filter": []
+              }
+            }
+          }
+        }
+        for t in self.allergy:
+          allergy_query["nested"]["query"]["bool"]["filter"].append({
+            "term": {
+              "allergies.allergy": t
+            }
+          })
+
+        query["query"]["bool"]["filter"].append(allergy_query)
         return query
 
     def add_large_category(self, query):
@@ -202,15 +194,18 @@ class MakeESQuery:
         if self.search_query:
             is_none += 1
             query = self.add_search_query(query)
-        if self.recipe_name:
+        if self.drink_name:
             is_none += 1
-            query = self.add_recipe_name(query)
+            query = self.add_drink_name(query)
         if self.price:
             is_none += 1
             query = self.add_price(query)
         if self.tag:
             is_none += 1
             query = self.add_tag(query)
+        if self.allergy:
+            is_none += 1
+            query = self.add_allergy(query)
         if self.large_category:
             is_none += 1
             query = self.add_large_category(query)
@@ -229,8 +224,8 @@ class MakeESQuery:
               "from": self.offset,
               "size": self.limit
             }
-
         query = self.set_sort(query)
+
         return query
 
     def get_query(self):
@@ -243,12 +238,13 @@ class MakeESQuery:
         res = es_client.search(index=index, body=self.query, request_timeout=60)
         for r in res['hits']['hits']:
             my_res.append(r['_source'])
+
         return my_res
 
 
 if __name__ == '__main__':
-    es = MakeESQuery(search_query="사콜")
+    es = MakeESQuery(search_query="칠성사이다")
     print(es.get_query())
 
-    re = es.run_query('recipe')
+    re = es.run_query('drink')
     print(re)

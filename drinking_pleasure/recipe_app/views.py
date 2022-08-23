@@ -78,7 +78,8 @@ class RecipeView(APIView):
             data = es.run_query('recipe')
             data = util.preprocessing_recipe_es_data(data)
             return Response(status=status.HTTP_200_OK, data=data)
-        except Exception:
+        except Exception as ex:
+            print(ex)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)       
 
 
