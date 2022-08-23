@@ -35,6 +35,8 @@ class MakeESQuery:
         self.medium_category = medium_category
         self.small_category = small_category
         self.sort_by = sort_by
+        self.offset = offset
+        self.limit = limit
         self.query = self.make_query()
 
     def es_conn(self):
@@ -181,35 +183,55 @@ class MakeESQuery:
 
     def set_sort(self, query):
         if self.sort_by:
-            query["sort"] = [
-                {self.sort_by: {"order": "desc"}},
-                {'recipe_id': {"order": "desc"}},
-            ]
+            query["sort"] = {
+              self.sort_by: {"order": "desc"},
+              'recipe_id': {"order": "desc"}
+            }
         else:
-            query["sort"] = [
-                {'recipe_id': {"order": "desc"}},
-            ]
+            query["sort"] = {
+              'recipe_id': {"order": "desc"},
+            }
         return query
 
     def make_query(self):
         """
         """
+        is_none = 0
+
         query = self.base_query
-        query = self.set_sort(query)
         if self.search_query:
+            is_none += 1
             query = self.add_search_query(query)
         if self.recipe_name:
+            is_none += 1
             query = self.add_recipe_name(query)
         if self.price:
+            is_none += 1
             query = self.price(query)
         if self.tag:
+            is_none += 1
             query = self.add_tag(query)
         if self.large_category:
+            is_none += 1
             query = self.add_large_category(query)
         if self.medium_category:
+            is_none += 1
             query = self.add_medium_category(query)
         if self.small_category:
+            is_none += 1
             query = self.add_small_category(query)
+
+        if is_none == 0:
+            query = {
+              "query": {
+                  "match_all": {}
+              },
+              "from": self.offset,
+              "size": self.limit
+            }
+
+        query = self.set_sort(query)
+        print(query)
         return query
 
     def get_query(self):
@@ -222,7 +244,6 @@ class MakeESQuery:
         res = es_client.search(index=index, body=self.query, request_timeout=60)
         for r in res['hits']['hits']:
             my_res.append(r['_source'])
-
         return my_res
 
 

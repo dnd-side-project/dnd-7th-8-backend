@@ -4,27 +4,31 @@ import base64
 def preprocessing_recipe_es_data(data_list):
     res = []
     for data in data_list:
-        img = data["img"]
-        if img:
-            img = base64.decodebytes(img).decode('latin_1')
-
-        tag_list = []
         try:
-            for tag in data["tag_list"]:
-                tag_list.append(tag["tag"])
+            img = data["img"]
+            if img:
+                img = base64.decodebytes(img).decode('latin_1')
+            else:
+                img = None
+
+            tag_list = []
+            try:
+                for tag in data["tag_list"]:
+                    tag_list.append(tag["tag"])
+            except:
+                pass
+            my_data = {
+                "recipe_id": data["recipe_id"],
+                "nickname": data["nickname"],
+                "recipe_name": data["recipe_name"],
+                "img": img,
+                "price": data["price"],
+                "tag": tag_list,
+                "like_cnt": data["like_cnt"],
+            }
+            res.append(my_data)
         except:
             pass
-
-        my_data = {
-            "recipe_id": data["recipe_id"],
-            "nickname": data["nickname"],
-            "recipe_name": data["recipe_name"],
-            "img": img,
-            "price": data["price"],
-            "tag": tag_list,
-            "like_cnt": data["like_cnt"],
-        }
-        res.append(my_data)
 
     return res
 
