@@ -183,13 +183,11 @@ class MakeESQuery:
         if self.sort_by:
             query["sort"] = [
                 {self.sort_by: {"order": "desc"}},
-                {'reg_dtime': {"order": "desc"}},
-                {'@timestamp': {"order": "desc"}},
+                {'recipe_id': {"order": "desc"}},
             ]
         else:
             query["sort"] = [
-                {'reg_dtime': {"order": "desc"}},
-                {'@timestamp': {"order": "desc", "format": "strict_date_optional_time_nanos"}},
+                {'recipe_id': {"order": "desc"}},
             ]
         return query
 
