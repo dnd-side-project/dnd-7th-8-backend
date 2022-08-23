@@ -37,6 +37,8 @@ class MakeESQuery:
         self.medium_category = medium_category
         self.small_category = small_category
         self.sort_by = sort_by
+        self.offset = offset
+        self.limit = limit
         self.query = self.make_query()
 
     def es_conn(self):
@@ -186,24 +188,44 @@ class MakeESQuery:
     def make_query(self):
         """
         """
+        is_none = 0
+
         query = self.base_query
-        query = self.set_sort(query)
         if self.search_query:
+            is_none += 1
             query = self.add_search_query(query)
         if self.drink_name:
+            is_none += 1
             query = self.add_drink_name(query)
         if self.price:
-            query = self.price(query)
+            is_none += 1
+            query = self.add_price(query)
         if self.tag:
+            is_none += 1
             query = self.add_tag(query)
         if self.allergy:
+            is_none += 1
             query = self.add_allergy(query)
         if self.large_category:
+            is_none += 1
             query = self.add_large_category(query)
         if self.medium_category:
+            is_none += 1
             query = self.add_medium_category(query)
         if self.small_category:
+            is_none += 1
             query = self.add_small_category(query)
+
+        if is_none == 0:
+            query = {
+              "query": {
+                  "match_all": {}
+              },
+              "from": self.offset,
+              "size": self.limit
+            }
+        query = self.set_sort(query)
+
         return query
 
     def get_query(self):

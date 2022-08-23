@@ -207,7 +207,7 @@ class MakeESQuery:
             query = self.add_recipe_name(query)
         if self.price:
             is_none += 1
-            query = self.price(query)
+            query = self.add_price(query)
         if self.tag:
             is_none += 1
             query = self.add_tag(query)
@@ -231,7 +231,6 @@ class MakeESQuery:
             }
 
         query = self.set_sort(query)
-        print(query)
         return query
 
     def get_query(self):
