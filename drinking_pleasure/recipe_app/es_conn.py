@@ -107,7 +107,7 @@ class MakeESQuery:
                 "filter": [
                   {
                     "term": {
-                      "tag_list.tags": self.search_query
+                      "tag_list.tag": self.search_query
                     }
                   }
                 ]
