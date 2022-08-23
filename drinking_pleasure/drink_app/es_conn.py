@@ -175,14 +175,14 @@ class MakeESQuery:
 
     def set_sort(self, query):
         if self.sort_by:
-            query["sort"] = [
-                {self.sort_by: {"order": "desc"}},
-                {'drink_id': {"order": "desc"}},
-            ]
+            query["sort"] = {
+              self.sort_by: {"order": "desc"},
+              'recipe_id': {"order": "desc"}
+            }
         else:
-            query["sort"] = [
-                {'drink_id': {"order": "desc"}},
-            ]
+            query["sort"] = {
+              'recipe_id': {"order": "desc"},
+            }
         return query
 
     def make_query(self):
