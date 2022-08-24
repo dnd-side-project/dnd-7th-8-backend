@@ -313,7 +313,7 @@ class MeterialView(APIView):
         }
         is_suc, data = call_sp.call_sp_meterial_select(sp_args)
         if is_suc:
-            data = util.preprocessing_list_data(data)
+            # data = util.preprocessing_list_data(data)
             return Response(status=status.HTTP_200_OK, data=data)
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)      

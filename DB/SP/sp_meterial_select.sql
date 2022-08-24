@@ -26,13 +26,15 @@ LAST UPDATE : 2022-08-20
     IF (i_meterial_name IS NULL)
     THEN
     
-      SELECT meterial_name
+      SELECT meterial_id
+		       , meterial_name
       FROM recipe_meterial;
 
     ELSE
 
       SET @v_sql = CONCAT("
-        SELECT meterial_name
+        SELECT meterial_id
+             , meterial_name
         FROM recipe_meterial
         WHERE meterial_name LIKE '",i_meterial_name,"%';");
 
