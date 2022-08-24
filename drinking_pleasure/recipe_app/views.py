@@ -88,7 +88,7 @@ class RecipeDetailView(APIView):
 
     def get(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -108,7 +108,7 @@ class RecipeDetailView(APIView):
 
     def post(self, request):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -128,11 +128,8 @@ class RecipeDetailView(APIView):
             sweet_score = request.POST.get('sweet_score')
             alcohol_score = request.POST.get('alcohol_score')
             tag_list = request.POST.getlist('tag_list')
-            main_meterial = request.POST.get('main_meterial')
-            sub_meterial = request.POST.get('sub_meterial')
-
-            main_meterial_list = main_meterial.split(',')
-            sub_meterial_list = sub_meterial.split(',')
+            main_meterial_list = request.POST.getlist('main_meterial')
+            sub_meterial_list = request.POST.getlist('sub_meterial')
         except KeyError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -162,7 +159,7 @@ class RecipeDetailView(APIView):
 
     def delete(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -205,7 +202,7 @@ class RecipeReviewView(APIView):
 
     def post(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -240,7 +237,7 @@ class RecipeLikeView(APIView):
         유저가 해당 recipe_id에 좋아요 했는지 여부
         '''
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -260,7 +257,7 @@ class RecipeLikeView(APIView):
 
     def post(self, request, recipe_id):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -280,7 +277,7 @@ class RecipeLikeView(APIView):
 
     def delete(self, request, recipe_id):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -313,14 +310,14 @@ class MeterialView(APIView):
         }
         is_suc, data = call_sp.call_sp_meterial_select(sp_args)
         if is_suc:
-            data = util.preprocessing_list_data(data)
+            # data = util.preprocessing_list_data(data)
             return Response(status=status.HTTP_200_OK, data=data)
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
 
     def post(self, request):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
