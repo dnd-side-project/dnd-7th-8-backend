@@ -128,11 +128,8 @@ class RecipeDetailView(APIView):
             sweet_score = request.POST.get('sweet_score')
             alcohol_score = request.POST.get('alcohol_score')
             tag_list = request.POST.getlist('tag_list')
-            main_meterial = request.POST.get('main_meterial')
-            sub_meterial = request.POST.get('sub_meterial')
-
-            main_meterial_list = main_meterial.split(',')
-            sub_meterial_list = sub_meterial.split(',')
+            main_meterial_list = request.POST.getlist('main_meterial')
+            sub_meterial_list = request.POST.getlist('sub_meterial')
         except KeyError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -313,7 +310,7 @@ class MeterialView(APIView):
         }
         is_suc, data = call_sp.call_sp_meterial_select(sp_args)
         if is_suc:
-            data = util.preprocessing_list_data(data)
+            # data = util.preprocessing_list_data(data)
             return Response(status=status.HTTP_200_OK, data=data)
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
