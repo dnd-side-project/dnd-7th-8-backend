@@ -88,7 +88,7 @@ class RecipeDetailView(APIView):
 
     def get(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -108,7 +108,7 @@ class RecipeDetailView(APIView):
 
     def post(self, request):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -162,7 +162,7 @@ class RecipeDetailView(APIView):
 
     def delete(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -205,7 +205,7 @@ class RecipeReviewView(APIView):
 
     def post(self, request, pk):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -240,7 +240,7 @@ class RecipeLikeView(APIView):
         유저가 해당 recipe_id에 좋아요 했는지 여부
         '''
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -260,7 +260,7 @@ class RecipeLikeView(APIView):
 
     def post(self, request, recipe_id):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -280,7 +280,7 @@ class RecipeLikeView(APIView):
 
     def delete(self, request, recipe_id):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
@@ -320,7 +320,7 @@ class MeterialView(APIView):
 
     def post(self, request):
         try:
-            token = request.COOKIES.get('token')
+            token = request.headers.get('token')
             user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
 
             customer_uuid = user['id']
