@@ -79,3 +79,24 @@ class HotReview(APIView):
             data_list.append(data)
         return JsonResponse({'data' : data_list})
 
+
+@permission_classes([AllowAny]) 
+class HotDrink(APIView):
+    def get(self,request):
+        # SQL문 사용
+        sql_select = "call mazle.sp_home_drink_select(10, @o_out_code);"
+        rows = sql_cursor(sql_select)[1]
+        data_list = []
+        for row in rows:
+            data = dict()
+            data["drink_id"] = row['drink_id']
+            data["drink_name"] = row['drink_name']
+            if row["img"] is None or len(row["img"]) == 0:
+                data["img"] = "Not Exist"
+            else:
+                data["img"] = base64.decodebytes(row['img']).decode('latin_1')
+            data["price"] = row['price']
+            data["tag"] = row['tag']
+            data["like_cnt"] = row['like_cnt']
+            data_list.append(data)
+        return JsonResponse({'data' : data_list})
