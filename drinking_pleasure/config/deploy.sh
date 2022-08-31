@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # settings 파일 이동
-cp /home/ubuntu/my_settings.py /usr/share/Mazle/drinking_pleasure/drinking_pleasure/
+cp /home/ubuntu/my_settings.py /home/ubuntu/Mazle/drinking_pleasure/drinking_pleasure/
 
-cd /usr/share/Mazle/drinking_pleasure
+cd /home/ubuntu/Mazle/drinking_pleasure
 
 # python 버전 변경
 pyenv global 3.8.5
 
 # 가상환경설정
 python3 -m venv .venv
-source /usr/share/Mazle/drinking_pleasure/.venv/bin/activate
-pip install -r /usr/share/Mazle/drinking_pleasure/requirements.txt
+source /home/ubuntu/Mazle/drinking_pleasure/.venv/bin/activate
+pip install -r /home/ubuntu/Mazle/drinking_pleasure/requirements.txt
 
 # uwsgi 설정
-uwsgi --ini /usr/share/Mazle/drinking_pleasure/config/uwsgi/uwsgi.ini
+uwsgi --ini /home/ubuntu/Mazle/drinking_pleasure/config/uwsgi/uwsgi.ini
 
 # nginx 재시작
 sudo service nginx restart
