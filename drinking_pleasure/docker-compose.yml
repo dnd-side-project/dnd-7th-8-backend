@@ -1,22 +1,22 @@
 version: "3"
 services:
+  django-web:
+    container_name: django-web
+    image: mazle/mazle-test:1.0.0 # 이미지, 태그
+    ports:
+        - "8000:8000"
+    build: ./mazle
+    volumes: 
+        - ./mazle:/home/ubuntu/Mazle/drinking_pleasure
+        - ./log/uwsgi:/log
   nginx:
     container_name: nginx
-    build: ./config/nginx
+    image: nginx
     ports:
-      - "80:80"
+        - "80:80"
+    build: ./nginx
     volumes:
-      - ./config/nginx:/etc/nginx.conf.d
-      - .:/code
-    depends_on:
-      - web
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: gunicorn drinking_pleasure.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/code
-    ports:
-      - "8000"
+        - ./mazle:/home/ubuntu/Mazle/drinking_pleasure
+        - ./log/nginx:/log
+    depends_on : 
+        - django-web
