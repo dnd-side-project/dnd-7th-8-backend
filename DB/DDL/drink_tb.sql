@@ -11,7 +11,7 @@ CREATE TABLE drink(
     `medium_category`   VARCHAR(50)     NOT NULL    COMMENT '중분류',
     `small_category`    VARCHAR(50)     NOT NULL    COMMENT '소분류',
     `img`               LONGBLOB                    COMMENT '이미지',
-    `alchol`            INTEGER         NOT NULL    COMMENT '알콜도수',
+    `alcohol`            INTEGER         NOT NULL    COMMENT '알콜도수',
     `measure`           INTEGER         NOT NULL    COMMENT '용량(ml)',
     `caffeine`          INTEGER         NOT NULL    COMMENT '카페인(ml)',
     PRIMARY KEY (`drink_id`)
