@@ -30,4 +30,4 @@ then
 fi
 
 echo "start docker-compose up: ubuntu"
-sudo docker-compose -f /home/ubuntu/drinking_pleasure/docker-compose.yml up --build -d
+sudo docker-compose -f /home/ubuntu/Mazle/drinking_pleasure/docker-compose.yml up --build -d
