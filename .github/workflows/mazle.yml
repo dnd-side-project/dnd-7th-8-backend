@@ -31,9 +31,9 @@ jobs:
       - name: create remote directory
         uses: appleboy/ssh-action@master
         with:
+          key: ${{ secrets.KEY }}
           host: ${{ secrets.HOST }}
           username: ubuntu
-          key: ${{ secrets.KEY }}
           script: mkdir -p /home/ubuntu/Mazle
 
       - name: copy source via ssh key
@@ -48,7 +48,7 @@ jobs:
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         env:
-          DEPLOY_USERNAME: hanqyu
+          DEPLOY_USERNAME: dylee
         with:
           host: ${{ secrets.HOST }}
           username: ubuntu
