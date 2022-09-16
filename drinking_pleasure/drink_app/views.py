@@ -1,39 +1,37 @@
-from pickle import EMPTY_DICT
-from rest_framework.decorators import   authentication_classes, permission_classes
-from rest_framework.response import Response
-from django.http import JsonResponse, HttpResponse
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed
 import base64
+from multiprocessing import AuthenticationError
 import jwt
 from django.conf import settings
-from mysql.connector import pooling
-import uuid
+from django.http import JsonResponse, HttpResponse
+from rest_framework import status
+from rest_framework.decorators import   authentication_classes, permission_classes
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from util.db_conn import db_conn
+import drink_app.call_sp as call_sp
+
+
 @db_conn
 def sql_cursor(sql, sql_args, cursor=None):
     cursor.execute(sql, sql_args)
     rows = cursor.fetchall()
     return rows
 
-@db_conn
-def sql_all_cursor(sql, cursor=None):
-    cursor.execute(sql)
-    rows = cursor.fetchall()
-    return rows
+
 JWT_SECRET_KEY = getattr(settings, 'SIMPLE_JWT', None)['SIGNING_KEY']
 
 @permission_classes([AllowAny]) 
 class DrinkGetList(APIView):
-    def get(self,request):
+    def get(self, request):
         # SQL문 사용
-        sql_select = "SELECT * \
+        sql_query = "SELECT * \
             , IFNULL\
             ((SELECT AVG(score) FROM drink_comment WHERE drink_id=D.drink_id GROUP BY drink_id),0) AS score\
             FROM drink D;"
-        rows = sql_all_cursor(sql_select)[1]
+        _, rows = call_sp.call_query(sql_query)
+
         data_list = []
         for row in rows:
             data = dict()
@@ -57,159 +55,269 @@ class DrinkGetList(APIView):
 
 
 @authentication_classes([])
-@permission_classes([]) 
+@permission_classes([])
 class DrinkDetail(APIView):
-    def get(self,request, pk):
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_403_FORBIDDEN)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        # SQL문 사용
-        sql_get = "call sp_drink_select(%s,%s,@o)"
-        rows = sql_cursor(sql_get,(pk,payload['id']))[1]
-        data = {
-            "drink_name" : rows[0]['drink_name'],
-            "description" : rows[0]['description'],
-            "calorie" : rows[0]['calorie'],
-            "manufacture" : rows[0]['manufacture'],
-            "price" : rows[0]['price'],
-            "large_category" : rows[0]['large_category'],
-            "medium_category" : rows[0]['medium_category'],
-            "small_category" : rows[0]['small_category'],
-            "img" : base64.decodebytes(rows[0]['img']).decode('latin_1'),
-            "alcohol" : rows[0]['alcohol'],
-            "measure" : rows[0]['measure'],
-            "caffeine" : rows[0]['caffeine'],
-            "tag" : rows[0]['tag'],
-            "like_cnt" : rows[0]['like_cnt'],
+    def get(self, request, pk):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            customer_uuid = None
+
+        sp_args = {
+            'drink_id': pk,
+            'customer_uuid': customer_uuid,
         }
-        return JsonResponse({'data' : data})
+        _, data = call_sp.call_sp_drink_select(sp_args)
+        data['img'] = base64.decodebytes(data['img']).decode('latin_1')
 
-    def post(self,request):
-        drink_name = request.POST.get['drink_name']
-        description = request.POST.get['description']
-        calorie = request.POST.get['calorie']
-        manufacture = request.POST.get['manufacture']
-        price = request.POST.get['price']
-        large_category = request.POST.get['large_category']
-        medium_category = request.POST.get['medium_category']
-        small_category = request.POST.get['small_category']
-        img = request.FILES['img']
-        alcohol = request.POST.get['alcohol']
-        measure = request.POST.get['measure']
-        caffeine = request.POST.get['caffeine']
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_403_FORBIDDEN)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:   
-            raise AuthenticationFailed('UnAuthenticated!')
-        sql_insert = "call sp_drink_set(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,@o_id,@o_code)"
-        sql_cursor(sql_insert,(drink_name,description,calorie,manufacture,price,large_category,medium_category,small_category,img,alcohol,measure,caffeine))
-        return Response({"message": "success create drink"}, status=status.HTTP_201_CREATED)
+        return JsonResponse({'data': data})
+
+    def post(self, request):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+            customer_uuid = user['id']
+            if not customer_uuid:
+                raise AuthenticationError
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            drink_name = request.POST.get['drink_name']
+            description = request.POST.get['description']
+            calorie = request.POST.get['calorie']
+            manufacture = request.POST.get['manufacture']
+            price = request.POST.get['price']
+            large_category = request.POST.get['large_category']
+            medium_category = request.POST.get['medium_category']
+            small_category = request.POST.get['small_category']
+            img = request.FILES['img']
+            alcohol = request.POST.get['alcohol']
+            measure = request.POST.get['measure']
+            caffeine = request.POST.get['caffeine']
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        sp_args = {
+            'drink_name': drink_name,
+            'description': description,
+            'calorie': calorie,
+            'manufacture': manufacture,
+            'price': price,
+            'large_category': large_category,
+            'medium_category': medium_category,
+            'small_category': small_category,
+            'img': img,
+            'alcohol': alcohol,
+            'measure': measure,
+            'caffeine': caffeine,
+        }
+        is_suc, drink_id = call_sp.call_sp_drink_set(sp_args)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-        
 @authentication_classes([])
 @permission_classes([]) 
 class DrinkReview(APIView):
-    def get(self,request, pk):
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_403_FORBIDDEN)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        sql = "call sp_drink_comment_select(%s,@o)"
-        rows = sql_cursor(sql,(pk,))[1]
-        data_list = []
-        if len(rows) == 0:
-            return Response({"message" : "No data in comment"}, status=status.HTTP_404_NOT_FOUND)
-        for row in rows:
-            data = dict()
-            data["nickname"] = row['nickname']
-            data["comment"] = row['comment']
-            data["score"] = row['score']
-            data["like_cnt"] = row['like_cnt']
-            data_list.append(data)
-        return JsonResponse({'data' : data_list})
+    def get(self, request, pk):
+        try:
+            offset = request.GET.get('offset')
+            limit = request.GET.get('limit')
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self,request, pk):
-        comment = request.POST.get('comment')
-        score = request.POST.get('score')
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_200_OK)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        # SQL문 사용
-        sql_insert = "insert into drink_comment (drink_id, customer_uuid, comment, score) values (%s,%s,%s,%s)"
-        sql_cursor(sql_insert,(pk,payload['id'],comment,score))
-        return Response({"message": "success create comment"}, status=status.HTTP_201_CREATED)
-        
-    def delete(self,request, pk):
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_200_OK)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        sql_delete = "delete from drink_comment where drink_id=%s and customer_uuid=%s"
-        sql_cursor(sql_delete,(pk,payload['id']))
-        return Response({"message": "success delete comment"}, status=status.HTTP_200_OK)
-        
+        sp_args = {
+            'drink_id': pk,
+            'offset': offset,
+            'limit': limit,
+        }
+        is_suc, data = call_sp.call_sp_drink_comment_select(sp_args)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK, data=data)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, pk):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+            customer_uuid = user['id']
+            if not customer_uuid:
+                raise AuthenticationError
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            comment = request.POST.get('comment')
+            score = request.POST.get('score')
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        sp_args = {
+            'customer_uuid': customer_uuid,
+            'drink_id': pk,
+            'comment': comment,
+            'score': score,
+        }
+        is_suc, _ = call_sp.call_sp_drink_comment_set(sp_args)
+
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, pk):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+            customer_uuid = user['id']
+            if not customer_uuid:
+                raise AuthenticationError
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_delete = f"delete from drink_comment where drink_id={pk}\
+             and customer_uuid={customer_uuid}"
+        _, is_suc = call_sp.call_query_one(sql_delete)
+
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-        
 @authentication_classes([])
 @permission_classes([]) 
 class DrinkLike(APIView):
-    def post(self,request, pk):
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_200_OK)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        sql_exist = "select * from drink_like where drink_id=%s and customer_uuid=%s"
-        rows = sql_cursor(sql_exist,(pk,payload['id'],))[1]
-        if rows:
-            sql_delete = "delete from drink_like where drink_id=%s and customer_uuid=%s"
-            sql_cursor(sql_delete,(pk,payload['id']))
-            return Response({"message": "success delete like"}, status=status.HTTP_200_OK)
+
+    def get(self, request, drink_id):
+        '''
+        유저가 해당 recipe_id에 좋아요 했는지 여부
+        '''
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_exist = f'''SELECT *
+                        FROM drink_like
+                        WHERE drink_id={drink_id}
+                          AND customer_uuid={customer_uuid}'''
+        is_suc, data = call_sp.call_query_one(sql_exist)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK, data=data)
         else:
-            sql_insert = "insert into drink_like (drink_id, customer_uuid) values (%s,%s)"
-            sql_cursor(sql_insert,(pk,payload['id']))
-            return Response({"message": "success create like"}, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, drink_id):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_insert = f'''INSERT INTO drink_like(
+                            drink_id
+                          , customer_uuid
+                        ) VALUES(
+                            {drink_id}
+                          , {customer_uuid});'''
+        is_suc, _ = call_sp.call_query_one(sql_insert)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, drink_id):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_delete = f'''DELETE FROM drink_like
+                         WHERE drink_id={drink_id}
+                           AND customer_uuid={customer_uuid});'''
+        is_suc, _ = call_sp.call_query_one(sql_delete)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @authentication_classes([])
-@permission_classes([]) 
+@permission_classes([])
 class DrinkCommentLike(APIView):
-    def post(self,request, pk):
-        token = request.headers.get('token')
-        if not token :
-            return HttpResponse("User doesn't have token", status=status.HTTP_200_OK)
-        try :
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('UnAuthenticated!')
-        sql_exist = "select * from drink_comment_like where comment_id=%s and customer_uuid=%s"
-        rows = sql_cursor(sql_exist,(pk,payload['id'],))[1]
-        if rows:
-            sql_delete = "delete from drink_comment_like where comment_id=%s and customer_uuid=%s"
-            sql_cursor(sql_delete,(pk,payload['id']))
-            return Response({"message": "success delete comment like"}, status=status.HTTP_200_OK)
+    def get(self, request, comment_id):
+        '''
+        유저가 해당 comment에 좋아요 했는지 여부
+        '''
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_exist = f'''SELECT *
+                        FROM drink_comment_like
+                        WHERE comment_id={comment_id}
+                          AND customer_uuid={customer_uuid}'''
+        is_suc, data = call_sp.call_query_one(sql_exist)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK, data=data)
         else:
-            sql_insert = "insert into drink_comment_like (comment_id, customer_uuid) values (%s,%s)"
-            sql_cursor(sql_insert,(pk,payload['id']))
-            return Response({"message": "success create comment like"}, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, comment_id):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_insert = f'''INSERT INTO drink_comment_like(
+                            comment_id
+                          , customer_uuid
+                        ) VALUES(
+                            {comment_id}
+                          , {customer_uuid});'''
+        is_suc, _ = call_sp.call_query_one(sql_insert)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, comment_id):
+        try:
+            token = request.headers.get('token')
+            user = jwt.decode(token, JWT_SECRET_KEY, algorithms='HS256')
+
+            customer_uuid = user['id']
+        except Exception:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        sql_delete = f'''DELETE FROM drink_comment_like
+                         WHERE comment_id={comment_id}
+                           AND customer_uuid={customer_uuid});'''
+        is_suc, _ = call_sp.call_query_one(sql_delete)
+        if is_suc:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
