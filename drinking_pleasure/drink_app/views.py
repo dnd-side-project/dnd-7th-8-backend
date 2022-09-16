@@ -73,14 +73,14 @@ class DrinkDetail(APIView):
         if is_suc:
             data['img'] = base64.decodebytes(data['img']).decode('latin_1')
 
-            sql_query = f'''UPDATE mazle.recipe
+            sql_query = f'''UPDATE mazle.drink
                             SET views=views+1
-                            WHERE recipe_id={pk};'''
+                            WHERE drink_id={pk};'''
             call_sp.call_query(sql_query)
 
             return Response(status=status.HTTP_200_OK, data=data)
         else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=[])
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request):
         try:
