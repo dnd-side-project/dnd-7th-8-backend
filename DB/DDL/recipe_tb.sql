@@ -14,6 +14,7 @@ CREATE TABLE recipe(
     `price_score`       FLOAT           NOT NULL    COMMENT '가성비점수',
     `sweet_score`       FLOAT           NOT NULL    COMMENT '단맛점수',
     `alcohol_score`     FLOAT           NOT NULL    COMMENT '알콜점수',
+    `views`             INTEGER         NOT NULL    DEFAULT 0   COMMENT '조회수',
     PRIMARY KEY (`recipe_id`)
 )ENGINE=INNODB CHARSET=utf8mb4 COMMENT='레시피 테이블';
 

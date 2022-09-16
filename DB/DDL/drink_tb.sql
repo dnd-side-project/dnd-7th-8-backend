@@ -11,9 +11,10 @@ CREATE TABLE drink(
     `medium_category`   VARCHAR(50)     NOT NULL    COMMENT '중분류',
     `small_category`    VARCHAR(50)     NOT NULL    COMMENT '소분류',
     `img`               LONGBLOB                    COMMENT '이미지',
-    `alcohol`            INTEGER         NOT NULL    COMMENT '알콜도수',
+    `alcohol`            INTEGER        NOT NULL    COMMENT '알콜도수',
     `measure`           INTEGER         NOT NULL    COMMENT '용량(ml)',
     `caffeine`          INTEGER         NOT NULL    COMMENT '카페인(ml)',
+    `views`             INTEGER         NOT NULL    DEFAULT 0   COMMENT '조회수',
     PRIMARY KEY (`drink_id`)
 )ENGINE=INNODB CHARSET=utf8mb4 COMMENT='음료 테이블';
 
