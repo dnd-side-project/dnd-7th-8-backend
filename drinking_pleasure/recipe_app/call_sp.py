@@ -2,6 +2,24 @@ from util.db_conn import db_conn
 
 
 @db_conn
+def call_query(sql_query, cursor=None):
+    """ 
+    쿼리 실행 함수
+    """
+    cursor.execute(sql_query)
+    data = cursor.fetchall()
+
+    cursor.execute('SELECT @o')
+    out_code = cursor.fetchone()
+    out_code = out_code['@o']
+
+    if out_code == 0:
+        return data
+    else:
+        return []
+
+
+@db_conn
 def call_sp_recipe_list_select(sp_args, cursor=None):
     """ 
     음료조회 임시. ES 구축 후 삭제 예정
