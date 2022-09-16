@@ -54,7 +54,7 @@ LAST UPDATE : 2022-08-07
         WHERE RC.recipe_id = i_recipe_id
         LIMIT i_offset, i_limit;
 
-    END IF
+    END IF;
 
     -- 3. recipe 댓글 총 개수 조회(for 내부 페이지네이션)
     SELECT COUNT(*) as `cnt`

@@ -196,7 +196,7 @@ class RecipeReviewView(APIView):
             'offset': offset,
             'limit': limit,
         }
-        is_suc, data = call_sp.call_sp_recipe_review_select(sp_args)
+        is_suc, data = call_sp.call_sp_recipe_comment_select(sp_args)
         if is_suc:
             for d in data:
                 d['score'] = int(d['score'])
@@ -225,7 +225,7 @@ class RecipeReviewView(APIView):
             'comment': comment,
             'score': score,
         }
-        is_suc, _ = call_sp.call_sp_recipe_review_set(sp_args)
+        is_suc, _ = call_sp.call_sp_recipe_comment_set(sp_args)
 
         if is_suc:
             return Response(status=status.HTTP_200_OK)

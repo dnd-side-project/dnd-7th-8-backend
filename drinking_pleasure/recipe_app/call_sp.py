@@ -183,8 +183,8 @@ def call_sp_recipe_delete(sp_args, cursor=None):
 
 
 @db_conn
-def call_sp_recipe_review_select(sp_args, cursor=None):
-    """CALL recipe Review select SP Fucntion
+def call_sp_recipe_comment_select(sp_args, cursor=None):
+    """CALL recipe comment select SP Fucntion
     Args:
         sp_args (dict): sp argumentes following keys::
             dict: {
@@ -193,12 +193,12 @@ def call_sp_recipe_review_select(sp_args, cursor=None):
                 'limit': `(int)`,
             }
     Returns:
-        res (dict): Recipe Review Data. following keys::
+        res (dict): Recipe comment Data. following keys::
             dict: {
                 '':
             }
     """
-    sp = "CALL sp_recipe_review_select(%(recipe_id)s, %(offset)s, %(limit)s, @o);"
+    sp = "CALL sp_recipe_comment_select(%(recipe_id)s, %(offset)s, %(limit)s, @o);"
     cursor.execute(sp, sp_args)
     data = cursor.fetchall()
 
@@ -213,8 +213,8 @@ def call_sp_recipe_review_select(sp_args, cursor=None):
 
 
 @db_conn
-def call_sp_recipe_review_set(sp_args, cursor=None):
-    """CALL recipe Review Insert SP Fucntion
+def call_sp_recipe_comment_set(sp_args, cursor=None):
+    """CALL recipe comment Insert SP Fucntion
     Args:
         sp_args (dict): sp argumentes following keys::
             dict: {
@@ -226,7 +226,7 @@ def call_sp_recipe_review_set(sp_args, cursor=None):
     Returns:
         res (bool): `True` if out_code==0 else `False`
     """
-    sp = "CALL sp_recipe_review_set(%(recipe_id)s, %(customer_uuid)s,\
+    sp = "CALL sp_recipe_comment_set(%(recipe_id)s, %(customer_uuid)s,\
          %(comment)s, %(score)s, @o);"
     cursor.execute(sp, sp_args)
 
