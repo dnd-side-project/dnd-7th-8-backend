@@ -1,6 +1,8 @@
 CREATE DEFINER=`dylee`@`%` PROCEDURE `sp_drink_comment_select` (
-     IN i_drink_id      VARCHAR(40)     -- 음료ID
-    ,OUT `o_out_code`   SMALLINT
+     IN `i_drink_id`        VARCHAR(40)     -- 음료ID
+    ,IN `i_offset`          INT
+    ,IN `i_limit`           INT
+    ,OUT `o_out_code`       SMALLINT
 )
 
 BEGIN
@@ -23,18 +25,37 @@ LAST UPDATE : 2022-08-07
 
     SET o_out_code = 0;
 
-    -- 1. drink 댓글 조회
-    SELECT MU.`nickname`
-         , DC.`comment`
-         , DC.`score`
-         , (SELECT COUNT(*) FROM drink_comment_like WHERE R.drink_id = i_drink_id) as `like_cnt`
-    FROM drink_comment AS DC
-    LEFT JOIN (
-        SELECT customer_uuid
-             , nickname
-        FROM mazle_user
-    ) AS MU ON MU.customer_uuid=DC.customer_uuid
-    WHERE DC.drink_id = i_drink_id;
+    IF (i_offset IS NULL)
+    THEN
+        -- 1. drink 댓글 조회
+        SELECT MU.`nickname`
+            , DC.`comment`
+            , DC.`score`
+            , (SELECT COUNT(*) FROM drink_comment_like WHERE R.drink_id = i_drink_id) as `like_cnt`
+        FROM drink_comment AS DC
+        LEFT JOIN (
+            SELECT customer_uuid
+                , nickname
+            FROM mazle_user
+        ) AS MU ON MU.customer_uuid=DC.customer_uuid
+        WHERE DC.drink_id = i_drink_id;
+    ELSE
+        -- 1. drink 페이지네이션댓글 조회
+        SELECT MU.`nickname`
+            , DC.`comment`
+            , DC.`score`
+            , (SELECT COUNT(*) FROM drink_comment_like WHERE R.drink_id = i_drink_id) as `like_cnt`
+        FROM drink_comment AS DC
+        LEFT JOIN (
+            SELECT customer_uuid
+                , nickname
+            FROM mazle_user
+        ) AS MU ON MU.customer_uuid=DC.customer_uuid
+        WHERE DC.drink_id = i_drink_id
+        LIMIT i_offset, i_limit;
+
+    END IF;
+
 
     -- 2. drink 댓글 총 개수 조회(for 내부 페이지네이션)
     SELECT COUNT(*) as `cnt`
