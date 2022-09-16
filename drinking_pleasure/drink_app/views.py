@@ -1,16 +1,16 @@
+import jwt
 import base64
 from multiprocessing import AuthenticationError
-import jwt
 from django.conf import settings
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from rest_framework import status
-from rest_framework.decorators import   authentication_classes, permission_classes
-from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from util.db_conn import db_conn
+from rest_framework.decorators import authentication_classes
+from rest_framework.decorators import permission_classes
 import drink_app.call_sp as call_sp
+from util.db_conn import db_conn
 
 
 @db_conn
@@ -22,7 +22,7 @@ def sql_cursor(sql, sql_args, cursor=None):
 
 JWT_SECRET_KEY = getattr(settings, 'SIMPLE_JWT', None)['SIGNING_KEY']
 
-@permission_classes([AllowAny]) 
+@permission_classes([AllowAny])
 class DrinkGetList(APIView):
     def get(self, request):
         # SQL문 사용
@@ -50,8 +50,7 @@ class DrinkGetList(APIView):
             data["caffeine"] = row['caffeine']
             data["score"] = row['score']
             data_list.append(data)
-        return JsonResponse({'data' : data_list})
-
+        return JsonResponse({'data': data_list})
 
 
 @authentication_classes([])
@@ -70,10 +69,18 @@ class DrinkDetail(APIView):
             'drink_id': pk,
             'customer_uuid': customer_uuid,
         }
-        _, data = call_sp.call_sp_drink_select(sp_args)
-        data['img'] = base64.decodebytes(data['img']).decode('latin_1')
+        is_suc, data = call_sp.call_sp_drink_select(sp_args)
+        if is_suc:
+            data['img'] = base64.decodebytes(data['img']).decode('latin_1')
 
-        return JsonResponse({'data': data})
+            sql_query = f'''UPDATE mazle.recipe
+                            SET views=views+1
+                            WHERE recipe_id={pk};'''
+            call_sp.call_query(sql_query)
+
+            return Response(status=status.HTTP_200_OK, data=data)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=[])
 
     def post(self, request):
         try:
@@ -123,7 +130,7 @@ class DrinkDetail(APIView):
 
 
 @authentication_classes([])
-@permission_classes([]) 
+@permission_classes([])
 class DrinkReview(APIView):
     def get(self, request, pk):
         try:
@@ -193,7 +200,7 @@ class DrinkReview(APIView):
 
 
 @authentication_classes([])
-@permission_classes([]) 
+@permission_classes([])
 class DrinkLike(APIView):
 
     def get(self, request, drink_id):
