@@ -103,7 +103,9 @@ class RecipeDetailView(APIView):
         if is_suc:
             data = util.preprocessing_recipe_data(data)
 
-            sql_query = f'UPDATE mazle.recipe SET views=views+1 WHERE recipe_id={pk};'
+            sql_query = f'''UPDATE mazle.recipe
+                            SET views=views+1
+                            WHERE recipe_id={pk};'''
             _, _ = call_sp.call_query(sql_query)
 
             return Response(status=status.HTTP_200_OK, data=data)

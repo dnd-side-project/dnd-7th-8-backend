@@ -107,7 +107,7 @@ def call_sp_drink_comment_set(sp_args, cursor=None):
     음료 리뷰 등록
     """
     sp = 'CALL sp_drink_comment_select(%(drink_id)s,\
-        %(i_customer_uuid)s, %(i_comment)s, %(i_score)s, @o);'
+        %(customer_uuid)s, %(comment)s, %(score)s, @o);'
     cursor.execute(sp, sp_args)
 
     cursor.execute('SELECT @o')
