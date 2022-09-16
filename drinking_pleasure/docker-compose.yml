@@ -5,18 +5,18 @@ services:
     image: mazle/mazle-test:1.0.0 # 이미지, 태그
     ports:
         - "8000:8000"
-    build: ./mazle
+    build: ./
     volumes: 
-        - ./mazle:/home/ubuntu/Mazle/drinking_pleasure
+        - ./:/home/ubuntu/Mazle/drinking_pleasure
         - ./log/uwsgi:/log
   nginx:
     container_name: nginx
     image: nginx
     ports:
         - "80:80"
-    build: ./nginx
+    build: ./config/nginx
     volumes:
-        - ./mazle:/home/ubuntu/Mazle/drinking_pleasure
+        - ./:/home/ubuntu/Mazle/drinking_pleasure
         - ./log/nginx:/log
     depends_on : 
         - django-web
