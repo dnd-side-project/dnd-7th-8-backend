@@ -9,14 +9,3 @@ services:
     volumes: 
         - ./:/home/ubuntu/Mazle/drinking_pleasure
         - ./log/uwsgi:/log
-  nginx:
-    container_name: nginx
-    image: nginx
-    ports:
-        - "80:80"
-    build: ./config/nginx
-    volumes:
-        - ./:/home/ubuntu/Mazle/drinking_pleasure
-        - ./log/nginx:/log
-    depends_on : 
-        - django-web

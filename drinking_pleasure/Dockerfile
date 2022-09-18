@@ -15,6 +15,6 @@ RUN pip3 install -r /home/ubuntu/Mazle/drinking_pleasure/requirements.txt
 # 프로젝트를 code로 복사
 COPY . .
 
-CMD ["uwsgi", "--ini", "/home/ubuntu/Mazle/drinking_pleasure/confing/uwsgi/uwsgi.ini"]
+CMD ["uwsgi", "--ini", "/home/ubuntu/Mazle/drinking_pleasure/config/uwsgi/uwsgi.ini"]
 
 EXPOSE 8000
